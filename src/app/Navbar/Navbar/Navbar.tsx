@@ -1,3 +1,4 @@
+"use client";
 import { FaUser } from "react-icons/fa";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
