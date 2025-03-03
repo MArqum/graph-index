@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from 'next/navigation';
-import React, { Component } from 'react';
+import React from 'react';
 import Navbar from '@/app/Navbar/page';
 
 const EthereumSubindexPage = () => {

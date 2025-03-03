@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Image from 'next/image';
 
 const dataProviders = [
     { id: 1, icon: "/QuickNode.png", name: "QuickNode" },
@@ -106,7 +107,13 @@ const CreateSubindex = () => {
                 ${selectedProvider === provider.id ? "border-blue-500" : "border-transparent"} hover:border-gray-500`}
                                 onClick={() => setSelectedProvider(provider.id)}
                             >
-                                <img src={provider.icon} alt={provider.name} className="w-24 h-10" />
+                                <Image
+                                    src={provider.icon}
+                                    alt={provider.name}
+                                    width={96} // 24 * 4
+                                    height={40} // 10 * 4
+                                    className="w-24 h-10"
+                                />
                             </div>
                         ))}
                     </div>
@@ -125,9 +132,15 @@ const CreateSubindex = () => {
                 // Step 2: Chatbot UI
                 <>
                     <div className="mt-28 w-[1500px] mx-auto flex transition-all duration-500">
-                    <div className={`flex-1 transition-all duration-500 ${messages.length > 0 ? "mr-6" : "mx-auto"}`}>
-                            <h1 className="text-xl font-bold mt-12"><img src="/logo.png" alt="Company 1" className="w-10" /></h1><br/>
-                            <p className="text-gray-400 mt-2">Hi! Lets create your subindex. What type of data do you want to index?</p><br/>
+                        <div className={`flex-1 transition-all duration-500 ${messages.length > 0 ? "mr-6" : "mx-auto"}`}>
+                            <h1 className="text-xl font-bold mt-12"><Image
+                                src="/logo.png"
+                                alt="Company 1"
+                                width={40} // Tailwind w-10 equals 40px
+                                height={40}
+                                className="w-10"
+                            /></h1><br />
+                            <p className="text-gray-400 mt-2">Hi! Lets create your subindex. What type of data do you want to index?</p><br />
 
                             {/* Chat Messages and Input Combined */}
                             <div className="mt-6 bg-[#1E1E1E] p-4 rounded-lg h-96 overflow-y-auto space-y-3 flex flex-col">
@@ -208,7 +221,13 @@ const CreateSubindex = () => {
                                             <button className="text-gray-400 hover:text-white text-sm">📝 Text</button>
                                             <button className="text-gray-400 hover:text-white text-sm">💻 Code</button>
                                         </div>
-                                        <img src="/graph.png" alt="Schema Preview" className="w-[300px] h-full text-center object-contain" />
+                                        <Image
+                                            src="/graph.png"
+                                            alt="Schema Preview"
+                                            width={300}
+                                            height={300}
+                                            className="h-full text-center object-contain"
+                                        />
 
                                         {/* Zoom Controls */}
                                         <div className="absolute bottom-4 right-4 flex flex-col space-y-2">
@@ -222,8 +241,8 @@ const CreateSubindex = () => {
                                 {/* Deploy Button */}
                                 <div className="px-4 pb-4 flex justify-end">
                                     <button
-                                    onClick={handleNavigation}
-                                    className="w-52 bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-500 text-white">Deploy</button>
+                                        onClick={handleNavigation}
+                                        className="w-52 bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-500 text-white">Deploy</button>
                                 </div>
                             </div>
                         )}

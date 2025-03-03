@@ -2,18 +2,11 @@
 import { motion } from "framer-motion"; // For animations if needed
 import { Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { FaUser, FaSearch } from "react-icons/fa"; // Import icons for user and search
+import { FaSearch } from "react-icons/fa"; // Import icons for user and search
 import Navbar from "@/app/Navbar/page";
 
 const Dashboard = () => {
-    const [isOpen, setIsOpen] = useState(false);
     const router = useRouter();
-
-    const handleLogout = () => {
-        // Add any logout logic here (e.g., clearing auth tokens)
-        router.push("/Login"); // Redirect to login page
-    };
     const handleNavigation = () => {
         // Add any logout logic here (e.g., clearing auth tokens)
         router.push("/Create-Subindex"); // Redirect to login page
@@ -48,25 +41,6 @@ const Dashboard = () => {
                         Create subIndex
                     </button>
                 </div>
-                {/* Dropdown Menu */}
-                {isOpen && (
-                    <div className="absolute right-60 top-12 mt-2 w-40 bg-[#111] border border-gray-700 rounded-lg shadow-lg">
-                        <ul className="text-white">
-                            <li
-                                className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
-                                onClick={() => alert("Settings Clicked")}
-                            >
-                                Settings
-                            </li>
-                            <li
-                                className="px-4 py-2 hover:bg-red-600 cursor-pointer"
-                                onClick={handleLogout}
-                            >
-                                Logout
-                            </li>
-                        </ul>
-                    </div>
-                )}
             </section>
 
 

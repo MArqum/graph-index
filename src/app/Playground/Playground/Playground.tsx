@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import { FaWallet } from 'react-icons/fa';
 import { FiSearch } from 'react-icons/fi';
 import { IoMdHelpCircleOutline } from 'react-icons/io';
 import { BsThreeDotsVertical } from 'react-icons/bs';
@@ -26,13 +25,6 @@ const Button = ({ children, onClick, className }: { children: React.ReactNode; o
   </button>
 );
 
-// Custom Input and Textarea components
-const Input = ({ ...props }) => (
-  <input
-    className="bg-gray-800 text-white rounded-xl p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-    {...props}
-  />
-);
 
 const Textarea = ({ ...props }) => (
   <textarea
@@ -78,7 +70,7 @@ const Playground = () => {
         {/* Main Content */}
         <div className="flex-1 flex flex-col space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold">User's Query</h2>
+            <h2 className="text-lg font-semibold">Users Query</h2>
           </div>
 
           <Card className="h-64">
