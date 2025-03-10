@@ -5,11 +5,8 @@ import { useState } from "react";
 import Image from 'next/image';
 
 const dataProviders = [
-    { id: 1, icon: "/QuickNode.png", name: "QuickNode" },
-    { id: 2, icon: "/Ankr.png", name: "Ankr" },
-    { id: 3, icon: "/Infura.png", name: "Infura" },
-    { id: 4, icon: "/Morails.png", name: "Moralis" },
-    { id: 5, icon: "/Alcheme.png", name: "Alchemy" },
+    { id: 1, icon: "/Solana.png", name: "Solana" },
+    { id: 2, icon: "/Etherium.png", name: "Etherium" },
 ];
 
 const CreateSubindex = () => {

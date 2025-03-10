@@ -90,7 +90,7 @@ const Dashboard = () => {
 
                                 {/* Top Right: Powered by QuickNode */}
                                 <div className="absolute top-3 right-3 text-sm text-gray-400">
-                                    Powered by <span className="font-bold text-white">QuickNode</span>
+                                    Powered by <span className="font-bold text-white">Solana</span>
                                 </div>
 
                                 {/* Card Content */}
