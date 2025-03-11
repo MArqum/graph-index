@@ -95,7 +95,7 @@ const CreateSubindex = () => {
                         Select a data provider and refine your schema effortlessly.
                     </p>
 
-                    <h2 className="text-xl font-bold mt-28">Select Data Provider</h2>
+                    <h2 className="text-xl font-bold mt-28">Select Chain</h2>
                     <div className="grid grid-cols-5 gap-6 mt-6">
                         {dataProviders.map((provider) => (
                             <div
