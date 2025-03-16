@@ -1,11 +1,19 @@
-// src/Login/page.tsx
-import CreateSubindex from './Ethereum-Subindex-Page/Ethereum-Subindex-Page';
+"use client";
+
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
+
+// Dynamically import the Ethereum-Subindex-Page component
+const CreateSubindex = dynamic(
+  () => import("./Ethereum-Subindex-Page/Ethereum-Subindex-Page"), 
+  { ssr: false } // Disable server-side rendering
+);
 
 const Page = () => {
   return (
-    <div>
+    <Suspense fallback={<div>Loading Ethereum Subindex Page...</div>}>
       <CreateSubindex />
-    </div>
+    </Suspense>
   );
 };
 

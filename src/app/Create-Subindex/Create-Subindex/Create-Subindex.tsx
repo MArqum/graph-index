@@ -10,6 +10,21 @@ const dataProviders = [
     { id: 2, icon: "/Etherium.png", name: "Etherium" },
 ];
 
+interface GraphNode {
+    id: string;
+    name: string;
+    type: "central" | "regular";
+    x?: number;
+    y?: number;
+    fx?: number | null;
+    fy?: number | null;
+}
+
+interface GraphLink {
+    source: GraphNode | string;
+    target: GraphNode | string;
+}
+
 const CreateSubindex = () => {
     const router = useRouter();
     const [selectedProvider, setSelectedProvider] = useState<number | null>(null);
@@ -18,7 +33,7 @@ const CreateSubindex = () => {
     const [messages, setMessages] = useState<
         { id: string; sender: "user" | "bot"; text: string }[]
     >([]);
-    const [graphData, setGraphData] = useState<{ nodes: { id: string; type: string }[]; links: { source: string; target: string }[] }>({
+    const [graphData, setGraphData] = useState<{ nodes: GraphNode[]; links: GraphLink[] }>({
         nodes: [],
         links: [],
     });
@@ -151,95 +166,95 @@ const CreateSubindex = () => {
         }
     };
 
-    const GraphComponent = ({ nodes, links }: { nodes: any[]; links: any[] }) => {
+    const GraphComponent = ({ nodes, links }: { nodes: GraphNode[]; links: GraphLink[] }) => {
         const svgRef = useRef<SVGSVGElement | null>(null);
-
+    
         useEffect(() => {
             if (!nodes.length || !links.length) return;
-
+    
             const width = 600;
             const height = 600;
-
+    
             const svg = d3.select(svgRef.current)
                 .attr("width", width)
                 .attr("height", height)
-                .style("background", "#0D0D0D") // Matching the dark background
+                .style("background", "#0D0D0D")
                 .style("border-radius", "12px");
-
+    
             svg.selectAll("*").remove();
-
-            const simulation = d3.forceSimulation(nodes)
-                .force("link", d3.forceLink(links).id((d: any) => d.id).distance(120))
+    
+            const simulation = d3.forceSimulation<GraphNode>(nodes)
+                .force(
+                    "link",
+                    d3.forceLink<GraphNode, GraphLink>(links)
+                        .id((d) => d.id)
+                        .distance(120)
+                )
                 .force("charge", d3.forceManyBody().strength(-300))
                 .force("center", d3.forceCenter(width / 2, height / 2))
                 .force("x", d3.forceX(width / 2).strength(0.1))
                 .force("y", d3.forceY(height / 2).strength(0.1));
-
+    
             const link = svg.selectAll("line")
                 .data(links)
                 .join("line")
                 .attr("stroke", "#888")
                 .attr("stroke-width", 1.5);
-
-            const node = svg.selectAll("circle")
+    
+            const node = svg.selectAll<SVGCircleElement, GraphNode>("circle")
                 .data(nodes)
                 .join("circle")
-                .attr("r", (d: any) => (d.type === "central" ? 20 : 14)) // Central node is larger
-                .attr("fill", (d: any) => (d.type === "central" ? "#FF8C00" : "#32CD32")) // Orange and green nodes
+                .attr("r", (d) => (d.type === "central" ? 20 : 14))
+                .attr("fill", (d) => (d.type === "central" ? "#FF8C00" : "#32CD32"))
                 .attr("stroke", "#000")
                 .attr("stroke-width", 1.5)
-                .call(drag(simulation) as any);
-
-            const text = svg.selectAll("text")
+                .call(drag(simulation));
+    
+            const text = svg.selectAll<SVGTextElement, GraphNode>("text")
                 .data(nodes)
                 .join("text")
                 .attr("dy", 4)
                 .attr("x", 10)
                 .attr("font-size", "12px")
                 .attr("fill", "#FFF")
-                .text((d: any) => d.name);
-
+                .text((d) => d.name);
+    
             simulation.on("tick", () => {
                 link
-                    .attr("x1", (d: any) => d.source.x)
-                    .attr("y1", (d: any) => d.source.y)
-                    .attr("x2", (d: any) => d.target.x)
-                    .attr("y2", (d: any) => d.target.y);
-
-                node
-                    .attr("cx", (d: any) => d.x)
-                    .attr("cy", (d: any) => d.y);
-
-                text
-                    .attr("x", (d: any) => d.x + 10)
-                    .attr("y", (d: any) => d.y);
+                    .attr("x1", (d) => (typeof d.source === "string" ? 0 : d.source.x!))
+                    .attr("y1", (d) => (typeof d.source === "string" ? 0 : d.source.y!))
+                    .attr("x2", (d) => (typeof d.target === "string" ? 0 : d.target.x!))
+                    .attr("y2", (d) => (typeof d.target === "string" ? 0 : d.target.y!));
+    
+                node.attr("cx", (d) => d.x!).attr("cy", (d) => d.y!);
+                text.attr("x", (d) => d.x! + 10).attr("y", (d) => d.y!);
             });
-
-            function drag(simulation: any) {
-                function dragstarted(event: any, d: any) {
+    
+            function drag(simulation: d3.Simulation<GraphNode, undefined>) {
+                function dragstarted(event: d3.D3DragEvent<SVGCircleElement, GraphNode, unknown>, d: GraphNode) {
                     if (!event.active) simulation.alphaTarget(0.3).restart();
                     d.fx = d.x;
                     d.fy = d.y;
                 }
-
-                function dragged(event: any, d: any) {
+    
+                function dragged(event: d3.D3DragEvent<SVGCircleElement, GraphNode, unknown>, d: GraphNode) {
                     d.fx = event.x;
                     d.fy = event.y;
                 }
-
-                function dragended(event: any, d: any) {
+    
+                function dragended(event: d3.D3DragEvent<SVGCircleElement, GraphNode, unknown>, d: GraphNode) {
                     if (!event.active) simulation.alphaTarget(0);
                     d.fx = null;
                     d.fy = null;
                 }
-
-                return d3.drag()
+    
+                return d3.drag<SVGCircleElement, GraphNode>()
                     .on("start", dragstarted)
                     .on("drag", dragged)
                     .on("end", dragended);
             }
         }, [nodes, links]);
-
+    
         return <svg ref={svgRef}></svg>;
     };
 

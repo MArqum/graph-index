@@ -8,11 +8,41 @@ import * as d3 from "d3";
 const EthereumSubindexPage = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
+    
+    interface Node {
+        fy: number | null;
+        fx: number | null;
+        name: string | number | boolean | null;
+        type: string;
+        id: string;
+        x?: number;
+        y?: number;
+    }
+
+    interface Link {
+        source: string | Node;
+        target: string | Node;
+    }
+
+    interface Indexer {
+        id: string;
+        name: string;
+        stake: number;
+    }
+    
+    interface Curator {
+        id: string;
+        name: string;
+        tokens: number;
+    }
+
     interface QueryData {
         about?: string;
-        indexers?: any;
-        curators?: any;
-        [key: string]: any;
+        indexers?: Indexer[]; // Specify the expected structure
+        curators?: Curator[]; // Specify the expected structure
+        nodes?: Node[];
+        links?: Link[];
+        [key: string]: unknown; // Use `unknown` instead of `any`
     }
 
     const [queryData, setQueryData] = useState<QueryData | null>(null);
@@ -39,19 +69,6 @@ const EthereumSubindexPage = () => {
 
     const tabs = ["Query", "About", "Indexers", "Curators"];
 
-    interface Node {
-        name: string | number | boolean | null;
-        type: string;
-        id: string;
-        x?: number;
-        y?: number;
-    }
-
-    interface Link {
-        source: Node;
-        target: Node;
-    }
-
     const drawGraph = (data: { nodes: Node[]; links: Link[] }) => {
         const width = 600;
         const height = 600;
@@ -64,8 +81,13 @@ const EthereumSubindexPage = () => {
             .attr("height", height)
             .style("border-radius", "12px");
 
-        const simulation = d3.forceSimulation(data.nodes)
-            .force("link", d3.forceLink(data.links).id((d) => (d as Node).id).distance(120))
+        const simulation = d3.forceSimulation<Node>(data.nodes)
+            .force("link", d3.forceLink<Node, Link>(data.links.map(link => ({
+                source: typeof link.source === "string" ? link.source : link.source.id,
+                target: typeof link.target === "string" ? link.target : link.target.id
+            })))
+                .id((d) => d.id)
+                .distance(120))
             .force("charge", d3.forceManyBody().strength(-300))
             .force("center", d3.forceCenter(width / 2, height / 2))
             .force("x", d3.forceX(width / 2).strength(0.1))
@@ -77,14 +99,15 @@ const EthereumSubindexPage = () => {
             .attr("stroke", "#888")
             .attr("stroke-width", 1.5);
 
-        const node = svg.selectAll("circle")
+            const node = svg
+            .selectAll<SVGCircleElement, Node>("circle") // Explicitly specify the types
             .data(data.nodes)
             .join("circle")
-            .attr("r", (d: Node) => (d.type === "central" ? 20 : 14))
-            .attr("fill", (d: Node) => (d.type === "central" ? "#FF8C00" : "#32CD32"))
+            .attr("r", (d) => (d.type === "central" ? 20 : 14))
+            .attr("fill", (d) => (d.type === "central" ? "#FF8C00" : "#32CD32"))
             .attr("stroke", "#000")
             .attr("stroke-width", 1.5)
-            .call(drag(simulation) as any);
+            .call(drag(simulation)); // Ensure correct type compatibility        
 
         const text = svg.selectAll("text")
             .data(data.nodes)
@@ -93,48 +116,44 @@ const EthereumSubindexPage = () => {
             .attr("x", 10)
             .attr("font-size", "12px")
             .attr("fill", "#FFF")
-            .text((d: Node) => d.name);
+            .text((d) => d.name?.toString() || "");
 
         simulation.on("tick", () => {
             link
-                .attr("x1", (d: any) => d.source.x)
-                .attr("y1", (d: any) => d.source.y)
-                .attr("x2", (d: any) => d.target.x)
-                .attr("y2", (d: any) => d.target.y);
+                .attr("x1", (d) => (d.source as Node).x!)
+                .attr("y1", (d) => (d.source as Node).y!)
+                .attr("x2", (d) => (d.target as Node).x!)
+                .attr("y2", (d) => (d.target as Node).y!);
 
             node
-                .attr("cx", (d: any) => d.x)
-                .attr("cy", (d: any) => d.y);
+                .attr("cx", (d) => d.x!)
+                .attr("cy", (d) => d.y!);
 
             text
-                .attr("x", (d: any) => d.x + 10)
-                .attr("y", (d: any) => d.y);
+                .attr("x", (d) => d.x! + 10)
+                .attr("y", (d) => d.y!);
         });
+    };
 
-        function drag(simulation: any) {
-            function dragstarted(event: any, d: any) {
+    function drag(simulation: d3.Simulation<Node, undefined>): d3.DragBehavior<SVGCircleElement, Node, unknown> {
+        return d3.drag<SVGCircleElement, Node>()
+            .on("start", (event: d3.D3DragEvent<SVGCircleElement, Node, Node>, d: Node) => {
                 if (!event.active) simulation.alphaTarget(0.3).restart();
-                d.fx = d.x;
-                d.fy = d.y;
-            }
-
-            function dragged(event: any, d: any) {
+                d.fx = d.x ?? null;
+                d.fy = d.y ?? null;
+            })
+            .on("drag", (event: d3.D3DragEvent<SVGCircleElement, Node, Node>, d: Node) => {
                 d.fx = event.x;
                 d.fy = event.y;
-            }
-
-            function dragended(event: any, d: any) {
+            })
+            .on("end", (event: d3.D3DragEvent<SVGCircleElement, Node, Node>, d: Node) => {
                 if (!event.active) simulation.alphaTarget(0);
                 d.fx = null;
                 d.fy = null;
-            }
-
-            return d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended);
-        }
-    };
+            });
+    }
+    
+    
 
 
     const handleNavigation = () => {
