@@ -46,13 +46,41 @@ const EthereumSubindexPage = () => {
         [key: string]: unknown; // Use `unknown` instead of `any`
     }
 
+    interface GraphNode {
+        id: string;
+        type: string;
+        index: number;
+        x: number;
+        y: number;
+        vx: number;
+        vy: number;
+      }
+      
+      interface GraphLink {
+        source: GraphNode;
+        target: GraphNode;
+        index: number;
+      }
+      
+      interface GraphData {
+        _id: string;
+        chatId: string;
+        selectedProvider: string;
+        createdAt: string;
+        nodes: GraphNode[];
+        links: GraphLink[];
+        endpoint?: string; // Added the missing 'endpoint' property
+      }
+
     const [queryData, setQueryData] = useState<QueryData | null>(null);
     const [activeTab, setActiveTab] = useState<keyof typeof exampleCode>("cURL");
     const [activeTabs, setActiveTabs] = useState("Query");
-    const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
     const [showPopup, setShowPopup] = useState(false);
-    const [graphData, setGraphData] = useState<any>(null);
     const [dynamicApiUrl, setDynamicApiUrl] = useState("");
+    const [graphData, setGraphData] = useState<GraphData | null>(null);
+    const [indexName, setIndexName] = useState<string | null>(null);
+    const [endpoint, setEndpoint] = useState<string | null>(null);
+    const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
     const apiURL= process.env.NEXT_PUBLIC_API_URL;
     const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
 
@@ -73,16 +101,25 @@ const EthereumSubindexPage = () => {
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
+        // Fetch graphData from URL
         const graphDataParam = urlParams.get("graphData");
-    
+        const indexNameParam = urlParams.get("indexName");
+        const endpointParam = urlParams.get("endpoint");
+        const selectedProviderParam = urlParams.get("selectedProvider");
+      
         if (graphDataParam) {
           try {
-            const decodedGraphData = JSON.parse(decodeURIComponent(graphDataParam));
+            const decodedGraphData: GraphData = JSON.parse(decodeURIComponent(graphDataParam));
             setGraphData(decodedGraphData);
           } catch (error) {
             console.error("Error parsing graphData:", error);
           }
         }
+      
+        // Set additional parameters
+        if (indexNameParam) setIndexName(indexNameParam);
+        if (endpointParam) setEndpoint(endpointParam);
+        if (selectedProviderParam) setSelectedProvider(selectedProviderParam);
       }, []);
 
 
@@ -95,14 +132,12 @@ const EthereumSubindexPage = () => {
         currentUrl.length > 25 ? currentUrl.substring(0, 25) + "..." : currentUrl;
 
         const shortenedEndpoint =
-        graphData?.endpoint?.length > 25 ? graphData.endpoint.substring(0, 25) + "..." : graphData?.endpoint || "Not Provided";
+        (graphData?.endpoint?.length ?? 0) > 25 ? graphData?.endpoint?.substring(0, 25) + "..." : graphData?.endpoint || "Not Provided";
     
 
         useEffect(() => {
             const encodedData = searchParams.get("graphData");
             const selectedProviderParam = searchParams.get("selectedProvider"); // Get selectedProvider from query params
-            const indexName = searchParams.get("indexName");
-            const endpoint = searchParams.get("endpoint");
             if (encodedData) {
                 try {
                     const decodedData = JSON.parse(decodeURIComponent(encodedData));
@@ -290,12 +325,12 @@ const EthereumSubindexPage = () => {
             <div className="p-8">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-2xl font-semibold">{graphData?.indexName || "Not Provided"}</h1><br />
+                        <h1 className="text-2xl font-semibold">{indexName || "Not Provided"}</h1><br />
                         <p className="text-gray-400 mt-1 text-sm">Aggregates and indexes Ethereum transactions, allowing users to query by sender, receiver, amount, and timestamp.</p><br />
                         <p className="text-gray-500 text-sm mt-1">⚡ Queries: 12.4k | Updated a year ago</p>
                         <div className="mt-6 flex items-center justify-center text-gray-400 font-semibold text-sm">
                             <span>PROVIDER <br />
-                                {graphData?.selectedProvider}
+                                {selectedProvider}
                             </span>
 
                             <span className="mx-4 text-white">|</span>
@@ -425,7 +460,7 @@ const EthereumSubindexPage = () => {
 
                 {/* API Key and Query Endpoint Section */}
                 <div className="p-4 rounded-lg bg-[#1E1E1E] col-span-1 sm:col-span-2 lg:col-span-3">
-                    <h2 className="text-lg sm:text-xl font-bold">API Key and Query Endpoint</h2>
+                    <h2 className="text-lg sm:text-xl font-bold">API Key and Query Endpoint{endpoint}</h2>
                     <div className="mt-4">
                         {/* API Key */}
                         <div className="relative flex justify-between text-xs sm:text-sm border-b border-gray-700 p-2">

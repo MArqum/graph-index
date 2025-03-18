@@ -25,13 +25,6 @@ const Button = ({ children, onClick, className }: { children: React.ReactNode; o
   </button>
 );
 
-const Textarea = ({ ...props }) => (
-  <textarea
-    className="bg-gray-800 text-white rounded-xl p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-    {...props}
-  />
-);
-
 const Playground = () => {
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<{ id: string; sender: string; text: string }[]>([]);
