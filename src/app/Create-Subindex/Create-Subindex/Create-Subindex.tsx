@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import * as d3 from "d3";
+import { v4 as uuidv4 } from 'uuid';
 
 const dataProviders = [
-    { id: 1, icon: "/Solana.png", name: "Solana" },
-    { id: 2, icon: "/Etherium.png", name: "Etherium" },
+    { id: "Solana", icon: "/Solana.png", name: "Solana" },
+    { id: "Etherium", icon: "/Etherium.png", name: "Etherium" },
 ];
 
 interface GraphNode {
@@ -38,6 +39,14 @@ const CreateSubindex = () => {
         links: [],
     });
     const [activePreview, setActivePreview] = useState<"graph" | "table" | "text" | "code">("graph");
+    const apiURL=process.env.NEXT_PUBLIC_API_URL
+
+    useEffect(() => {
+        const storedProvider = localStorage.getItem("selectedProvider");
+        if (storedProvider) {
+            setSelectedProvider(Number(storedProvider));
+        }
+    }, []);
 
     const renderPreview = () => {
         const containerStyles = `max-h-[600px] overflow-auto`;
@@ -168,21 +177,21 @@ const CreateSubindex = () => {
 
     const GraphComponent = ({ nodes, links }: { nodes: GraphNode[]; links: GraphLink[] }) => {
         const svgRef = useRef<SVGSVGElement | null>(null);
-    
+
         useEffect(() => {
             if (!nodes.length || !links.length) return;
-    
+
             const width = 600;
             const height = 600;
-    
+
             const svg = d3.select(svgRef.current)
                 .attr("width", width)
                 .attr("height", height)
                 .style("background", "#0D0D0D")
                 .style("border-radius", "12px");
-    
+
             svg.selectAll("*").remove();
-    
+
             const simulation = d3.forceSimulation<GraphNode>(nodes)
                 .force(
                     "link",
@@ -194,13 +203,13 @@ const CreateSubindex = () => {
                 .force("center", d3.forceCenter(width / 2, height / 2))
                 .force("x", d3.forceX(width / 2).strength(0.1))
                 .force("y", d3.forceY(height / 2).strength(0.1));
-    
+
             const link = svg.selectAll("line")
                 .data(links)
                 .join("line")
                 .attr("stroke", "#888")
                 .attr("stroke-width", 1.5);
-    
+
             const node = svg.selectAll<SVGCircleElement, GraphNode>("circle")
                 .data(nodes)
                 .join("circle")
@@ -209,7 +218,7 @@ const CreateSubindex = () => {
                 .attr("stroke", "#000")
                 .attr("stroke-width", 1.5)
                 .call(drag(simulation));
-    
+
             const text = svg.selectAll<SVGTextElement, GraphNode>("text")
                 .data(nodes)
                 .join("text")
@@ -218,71 +227,144 @@ const CreateSubindex = () => {
                 .attr("font-size", "12px")
                 .attr("fill", "#FFF")
                 .text((d) => d.name);
-    
+
             simulation.on("tick", () => {
                 link
                     .attr("x1", (d) => (typeof d.source === "string" ? 0 : d.source.x!))
                     .attr("y1", (d) => (typeof d.source === "string" ? 0 : d.source.y!))
                     .attr("x2", (d) => (typeof d.target === "string" ? 0 : d.target.x!))
                     .attr("y2", (d) => (typeof d.target === "string" ? 0 : d.target.y!));
-    
+
                 node.attr("cx", (d) => d.x!).attr("cy", (d) => d.y!);
                 text.attr("x", (d) => d.x! + 10).attr("y", (d) => d.y!);
             });
-    
+
             function drag(simulation: d3.Simulation<GraphNode, undefined>) {
                 function dragstarted(event: d3.D3DragEvent<SVGCircleElement, GraphNode, unknown>, d: GraphNode) {
                     if (!event.active) simulation.alphaTarget(0.3).restart();
                     d.fx = d.x;
                     d.fy = d.y;
                 }
-    
+
                 function dragged(event: d3.D3DragEvent<SVGCircleElement, GraphNode, unknown>, d: GraphNode) {
                     d.fx = event.x;
                     d.fy = event.y;
                 }
-    
+
                 function dragended(event: d3.D3DragEvent<SVGCircleElement, GraphNode, unknown>, d: GraphNode) {
                     if (!event.active) simulation.alphaTarget(0);
                     d.fx = null;
                     d.fy = null;
                 }
-    
+
                 return d3.drag<SVGCircleElement, GraphNode>()
                     .on("start", dragstarted)
                     .on("drag", dragged)
                     .on("end", dragended);
             }
         }, [nodes, links]);
-    
+
         return <svg ref={svgRef}></svg>;
     };
 
+    const getChatId = (): string => {
+        // Check if a chatId already exists in local storage
+        let chatId = localStorage.getItem('chatId');
+
+        if (!chatId) {
+            // Generate a new chatId if no active session exists
+            chatId = uuidv4();
+            localStorage.setItem('chatId', chatId); // Save it for future use
+        }
+
+        return chatId;
+    };
+
+    const currentChatId = getChatId();
 
     const handleSendMessage = async () => {
         if (!input.trim()) return;
-    
+
         const userMessage = input.trim();
         setMessages((prev) => [...prev, { id: Date.now().toString(), sender: "user", text: userMessage }]);
         setInput("");
-    
+
         // Add "Thinking..." message with a unique ID
         const thinkingMessage: { id: string; sender: "user" | "bot"; text: string } = { id: "thinking", sender: "bot", text: "Thinking..." };
         setMessages((prev) => [...prev, thinkingMessage]);
-    
+
         // Fetch response from RAG API
         const response = await fetchRAGResponse(userMessage);
-    
+
+        console.log(response);
+
+
         // Remove "Thinking..." message and add the real response
         setMessages((prev) =>
             prev.filter((msg) => msg.id !== "thinking").concat({ id: Date.now().toString(), sender: "bot", text: response })
         );
+
+        await sendChatToBackend(currentChatId, "user", userMessage); // Save user message
+        await sendChatToBackend(currentChatId, "bot", response);     // Save bot response
+
+    };
+
+
+    const sendChatToBackend = async (chatId: string, sender: 'user' | 'bot', text: string) => {
+        try {
+            const response = await fetch(`${apiURL}/chats`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ chatId, sender, text }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to send chat data to the backend");
+            }
+            console.log("Message added:", await response.json());
+        } catch (error) {
+            console.error("Error saving chat to backend:", error);
+        }
+    };
+
+
+
+    const handleNavigation = async () => {
+        if (!graphData || !currentChatId) {
+            console.error("Graph Data or Chat ID is missing");
+            return;
+        }
+    
+        // Get selectedProvider from localStorage
+        const selectedProvider = localStorage.getItem("selectedProvider");
+    
+        try {
+            const response = await fetch(`${apiURL}/graphData`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    chatId: currentChatId,
+                    createdAt: new Date().toISOString(), // Adding createdAt timestamp
+                    selectedProvider: selectedProvider, // Convert to number if exists
+                    ...graphData,
+                }),
+            });
+    
+            if (!response.ok) throw new Error("Failed to store Graph Data");
+    
+            console.log("Graph Data stored successfully!");
+    
+            // Navigate after successful storage
+            router.push(
+                `/Ethereum-Subindex-Page?graphData=${encodeURIComponent(JSON.stringify(graphData))}&selectedProvider=${selectedProvider}`
+            );
+        } catch (error) {
+            console.error("Error storing Graph Data:", error);
+        }
     };
     
 
-    const handleNavigation = () => {
-    router.push(`/Ethereum-Subindex-Page?graphData=${encodeURIComponent(JSON.stringify(graphData))}`);
-};
+
 
 
 
@@ -314,14 +396,17 @@ const CreateSubindex = () => {
                                 <div
                                     key={provider.id}
                                     className={`bg-[#1E1E1E] p-10 sm:p-16 flex justify-center items-center rounded-3xl cursor-pointer border-2 
-                                ${selectedProvider === provider.id ? "border-blue-500" : "border-transparent"} hover:border-gray-500`}
-                                    onClick={() => setSelectedProvider(provider.id)}
+                        ${selectedProvider === Number(provider.id) ? "border-blue-500" : "border-transparent"} hover:border-gray-500`}
+                                    onClick={() => {
+                                        setSelectedProvider(Number(provider.id));
+                                        localStorage.setItem("selectedProvider", provider.id.toString());
+                                    }}
                                 >
                                     <Image
                                         src={provider.icon}
                                         alt={provider.name}
-                                        width={96} // 24 * 4
-                                        height={40} // 10 * 4
+                                        width={96}
+                                        height={40}
                                         className="w-20 h-8 sm:w-24 sm:h-10"
                                     />
                                 </div>
@@ -331,13 +416,14 @@ const CreateSubindex = () => {
                         {/* Next Button */}
                         <button
                             className={`mt-10 px-6 py-3 bg-gray-600 text-white rounded-lg 
-                            ${selectedProvider ? "hover:bg-gray-400" : "opacity-50 cursor-not-allowed"}`}
-                            disabled={!selectedProvider}
+                ${selectedProvider !== null ? "hover:bg-gray-400" : "opacity-50 cursor-not-allowed"}`}
+                            disabled={selectedProvider === null}
                             onClick={() => setStep(2)}
                         >
                             Next
                         </button>
                     </div>
+
                 ) : (
                     <div className="mt-28 flex flex-col lg:flex-row gap-6 w-full mx-auto transition-all duration-500">
                         {/* Chat Section */}

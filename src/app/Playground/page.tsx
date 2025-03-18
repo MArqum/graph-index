@@ -1,5 +1,8 @@
-// src/Login/page.tsx
-import PlayGround from './Playground/Playground';
+"use client";
+
+import dynamic from 'next/dynamic';
+
+const PlayGround = dynamic(() => import('./Playground/Playground'), { ssr: false });
 
 const Page = () => {
   return (

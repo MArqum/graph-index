@@ -1,5 +1,7 @@
-// src/Login/page.tsx
-import CreateSubindex from './Create-Subindex/Create-Subindex';
+"use client";
+import dynamic from 'next/dynamic';
+
+const CreateSubindex = dynamic(() => import('./Create-Subindex/Create-Subindex'), { ssr: false });
 
 const Page = () => {
   return (

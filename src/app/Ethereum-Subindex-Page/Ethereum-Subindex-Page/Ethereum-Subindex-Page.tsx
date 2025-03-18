@@ -8,7 +8,8 @@ import * as d3 from "d3";
 const EthereumSubindexPage = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
-    
+    const [currentUrl, setCurrentUrl] = useState("");
+
     interface Node {
         fy: number | null;
         fx: number | null;
@@ -29,7 +30,7 @@ const EthereumSubindexPage = () => {
         name: string;
         stake: number;
     }
-    
+
     interface Curator {
         id: string;
         name: string;
@@ -48,18 +49,40 @@ const EthereumSubindexPage = () => {
     const [queryData, setQueryData] = useState<QueryData | null>(null);
     const [activeTab, setActiveTab] = useState<keyof typeof exampleCode>("cURL");
     const [activeTabs, setActiveTabs] = useState("Query");
+    const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+    const [showPopup, setShowPopup] = useState(false);
 
     useEffect(() => {
-        const encodedData = searchParams.get("graphData");
-        if (encodedData) {
-            try {
-                const decodedData = JSON.parse(decodeURIComponent(encodedData));
-                setQueryData(decodedData);
-            } catch (error) {
-                console.error("Error parsing graphData:", error);
+        setCurrentUrl(window.location.href);
+    }, []);
+
+    // Shorten the URL to first 15 characters + "..."
+    const shortenedUrl =
+        currentUrl.length > 25 ? currentUrl.substring(0, 25) + "..." : currentUrl;
+
+    const QUERY_ENDPOINT = process.env.NEXT_PUBLIC_ENDPOINT || "https://api.default.com";
+
+    const shortenedEndpoint =
+        QUERY_ENDPOINT.length > 25 ? QUERY_ENDPOINT.substring(0, 25) + "..." : QUERY_ENDPOINT;
+
+        useEffect(() => {
+            const encodedData = searchParams.get("graphData");
+            const selectedProviderParam = searchParams.get("selectedProvider"); // Get selectedProvider from query params
+        
+            if (encodedData) {
+                try {
+                    const decodedData = JSON.parse(decodeURIComponent(encodedData));
+                    setQueryData(decodedData);
+                } catch (error) {
+                    console.error("Error parsing graphData:", error);
+                }
             }
-        }
-    }, [searchParams]);
+        
+            if (selectedProviderParam) {
+                setSelectedProvider(selectedProviderParam); // Directly store string instead of converting to number
+            }
+        }, [searchParams]);
+
 
     useEffect(() => {
         if (queryData && 'nodes' in queryData && 'links' in queryData) {
@@ -99,7 +122,7 @@ const EthereumSubindexPage = () => {
             .attr("stroke", "#888")
             .attr("stroke-width", 1.5);
 
-            const node = svg
+        const node = svg
             .selectAll<SVGCircleElement, Node>("circle") // Explicitly specify the types
             .data(data.nodes)
             .join("circle")
@@ -152,11 +175,15 @@ const EthereumSubindexPage = () => {
                 d.fy = null;
             });
     }
-    
-    
+
+
 
 
     const handleNavigation = () => {
+        router.push('/Playground'); // Redirects to the Playground page
+    };
+
+    const Navigate = () => {
         router.push('/Playground'); // Redirects to the Playground page
     };
 
@@ -234,13 +261,34 @@ const EthereumSubindexPage = () => {
                         <p className="text-gray-500 text-sm mt-1">⚡ Queries: 12.4k | Updated a year ago</p>
                         <div className="mt-6 flex items-center justify-center text-gray-400 font-semibold text-sm">
                             <span>PROVIDER <br />
-                                QuickNode</span>
+                                {selectedProvider}
+                            </span>
+
                             <span className="mx-4 text-white">|</span>
-                            <span>QUERY ENDPOINT <br />
-                                https://api.Graph...</span>
+                            <span>
+                                QUERY ENDPOINT <br />
+                                <a
+                                    href={QUERY_ENDPOINT}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-400 hover:underline"
+                                >
+                                    {shortenedEndpoint}
+                                </a>
+                            </span>
                             <span className="mx-4 text-white">|</span>
-                            <span>GRAPHQL PLAYGROUND LINK<br />
-                                https://playground.graph... </span>
+                            <span>
+                                GRAPHQL PLAYGROUND LINK<br />
+                                <a
+                                    href={currentUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-400 hover:underline"
+                                >
+                                    {shortenedUrl}
+                                </a>
+                            </span>
+
                             <span className="mx-4 text-white">|</span>
                             <span>QUERY DOCUMENTATION<br />
                             </span>
@@ -268,9 +316,8 @@ const EthereumSubindexPage = () => {
                     <button
                         key={page}
                         onClick={() => setActiveTabs(page)}
-                        className={`py-2 border-b-2 transition ${
-                            activeTab === page ? "text-white border-white" : "text-gray-400 border-transparent hover:text-white hover:border-white"
-                        }`}
+                        className={`py-2 border-b-2 transition ${activeTab === page ? "text-white border-white" : "text-gray-400 border-transparent hover:text-white hover:border-white"
+                            }`}
                     >
                         {page}
                     </button>
@@ -317,48 +364,97 @@ const EthereumSubindexPage = () => {
             </div>
 
             {/* Query Quick Start */}
-            <div className="p-8 grid grid-cols-4 gap-6">
-                <div className=" p-4 rounded-lg">
-                    <h2 className="text-xl font-bold">Query Quick Start</h2>
-                    <p className="text-gray-400 mt-2 text-sm">The production URL for querying this Subindex on the decentralized network.</p>
+            <div className="p-6 sm:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Query Quick Start */}
+                <div className="p-4 rounded-lg bg-[#1E1E1E]">
+                    <h2 className="text-lg sm:text-xl font-bold">Query Quick Start</h2>
+                    <p className="text-gray-400 mt-2 text-sm">
+                        The production URL for querying this Subindex on the decentralized network.
+                    </p>
                     <div className="mt-4">
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-xs sm:text-sm">
                             <span className="text-gray-400">Query URL Format</span>
-                            <span className="text-gray-500">[project-name]</span>
+                            <span className="text-gray-500 truncate">[project-name]</span>
                         </div>
-                        <div className="mt-2 p-2 rounded-lg text-sm">https://api.graphql.io/subgraphs/name/ethereum</div>
+                        <div className="mt-2 p-2 bg-gray-900 rounded-lg text-xs sm:text-sm break-all">
+                        <a
+                                    href={QUERY_ENDPOINT}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-400 hover:underline"
+                                >
+                                    {QUERY_ENDPOINT}
+                                </a>
+                        </div>
                     </div>
                 </div>
 
                 {/* API Key and Query Endpoint Section */}
-                <div className=" p-4 rounded-lg col-span-3">
-                    <h2 className="text-xl font-bold">API Key and Query Endpoint</h2>
+                <div className="p-4 rounded-lg bg-[#1E1E1E] col-span-1 sm:col-span-2 lg:col-span-3">
+                    <h2 className="text-lg sm:text-xl font-bold">API Key and Query Endpoint</h2>
                     <div className="mt-4">
-                        <div className="flex justify-between text-sm border-b border-gray-700 p-2">
-                            <span className="text-gray-400">API Key</span>
-                            <button className="text-white p-2 text-xs bg-[#1E1E1E] rounded-lg">See your API key</button>
-                        </div>
-                        <div className="flex justify-between whitespace-nowrap mt-2 border-b border-gray-700 p-2">
+                        {/* API Key */}
+                        <div className="relative flex justify-between text-xs sm:text-sm border-b border-gray-700 p-2">
+            <span className="text-gray-400">API Key</span>
+            <button
+                className="text-white p-2 text-xs bg-gray-800 rounded-lg"
+                onClick={() => setShowPopup(!showPopup)}
+            >
+                See your API key
+            </button>
+
+            {showPopup && (
+                <div className="absolute top-10 right-0 bg-gray-900 text-white p-3 rounded-md shadow-lg border border-gray-700 text-xs">
+                    {process.env.NEXT_PUBLIC_OPENAI_API_KEY || "API Key not available"}
+                </div>
+            )}
+        </div>
+
+                        {/* Query Endpoint */}
+                        <div className="flex justify-between whitespace-nowrap mt-2 border-b border-gray-700 p-2 text-xs sm:text-sm">
                             <span className="text-gray-400">Query Endpoint</span>
-                            <div className=" p-2 text-sm">https://api.thegraph.com/subgraph/name/ethere...</div>
+                            <div className="p-2 truncate"><a
+                                    href={QUERY_ENDPOINT}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-400 hover:underline"
+                                >
+                                    {QUERY_ENDPOINT}
+                                </a></div>
                         </div>
-                        <div className="flex justify-between whitespace-nowrap mt-2">
+
+                        {/* GraphQL Playground Link */}
+                        <div className="flex justify-between whitespace-nowrap mt-2 text-xs sm:text-sm">
                             <span className="text-gray-400">GraphQL Playground Link</span>
-                            <div className=" p-2 underline text-sm">5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV</div>
-                        </div>
-                        <div className="bg-[#1E1E1E] rounded-lg text-sm mt-4 w-full">
-                            <div className="flex border-b border-gray-700 p-3">
-                                <span className='text-gray-500'>Query URL format</span>
+                            <div
+                            onClick={Navigate}
+                            className="p-2 underline break-all cursor-pointer">
+                                PlayGround
                             </div>
-                            <div className="p-4">
-                                <pre className="text-gray-400 text-wrap">
-                                    {'https://api.GraphRAG.com/subindexes/name/ethereum/'}
+                        </div>
+
+                        {/* Query URL Box */}
+                        <div className="bg-gray-900 rounded-lg text-xs sm:text-sm mt-4 w-full">
+                            <div className="flex border-b border-gray-700 p-3">
+                                <span className="text-gray-500">Query URL format</span>
+                            </div>
+                            <div className="p-4 break-all">
+                                <pre className="text-gray-400">
+                                <a
+                                    href={QUERY_ENDPOINT}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-400 hover:underline"
+                                >
+                                    {QUERY_ENDPOINT}
+                                </a>
                                 </pre>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
 
             {/* Example Usage and Documentation */}
             <div className="p-8">
@@ -383,23 +479,31 @@ const EthereumSubindexPage = () => {
                 </div>
             </div>
 
-            <div className="p-8">
-                <h2 className="text-xl font-bold">Documentation</h2>
-                <div className="p-8 grid grid-cols-3 gap-6">
+            <div className="p-6 sm:p-8">
+                <h2 className="text-lg sm:text-xl font-bold">Documentation</h2>
+                <div className="p-6 sm:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Card 1 */}
                     <div className="bg-[#1E1E1E] p-4 rounded-lg text-sm">
                         <h3 className="font-bold">How to Query Subindexes</h3>
                         <p className="text-gray-400 mt-2">Query Subindexes using multiple languages.</p>
                     </div>
+
+                    {/* Card 2 */}
                     <div className="bg-[#1E1E1E] p-4 rounded-lg text-sm">
                         <h3 className="font-bold">Querying Best Practices</h3>
                         <p className="text-gray-400 mt-2">Learn how to optimize queries made from your application.</p>
                     </div>
+
+                    {/* Card 3 */}
                     <div className="bg-[#1E1E1E] p-4 rounded-lg text-sm">
                         <h3 className="font-bold">Understanding Schema & Data Structure</h3>
-                        <p className="text-gray-400 mt-2">Learn how subindex schemas are structured and how to interpret the data they return.</p>
+                        <p className="text-gray-400 mt-2">
+                            Learn how subindex schemas are structured and how to interpret the data they return.
+                        </p>
                     </div>
                 </div>
             </div>
+
         </div>
     );
 }
