@@ -51,6 +51,40 @@ const EthereumSubindexPage = () => {
     const [activeTabs, setActiveTabs] = useState("Query");
     const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
     const [showPopup, setShowPopup] = useState(false);
+    const [graphData, setGraphData] = useState<any>(null);
+    const [dynamicApiUrl, setDynamicApiUrl] = useState("");
+    const apiURL= process.env.NEXT_PUBLIC_API_URL;
+    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+
+    useEffect(() => {
+        const graphDataParam = searchParams.get("graphData");
+        if (graphDataParam) {
+            try {
+                const decodedGraphData = JSON.parse(decodeURIComponent(graphDataParam));
+                if (decodedGraphData._id) {
+                    setDynamicApiUrl(`${apiURL}/api/${apiKey}/subindexes/id/${decodedGraphData._id}`);
+                }
+            } catch (error) {
+                console.error("Error parsing graphData:", error);
+            }
+        }
+    }, [searchParams.get("graphData")]);
+    
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const graphDataParam = urlParams.get("graphData");
+    
+        if (graphDataParam) {
+          try {
+            const decodedGraphData = JSON.parse(decodeURIComponent(graphDataParam));
+            setGraphData(decodedGraphData);
+          } catch (error) {
+            console.error("Error parsing graphData:", error);
+          }
+        }
+      }, []);
+
 
     useEffect(() => {
         setCurrentUrl(window.location.href);
@@ -60,15 +94,15 @@ const EthereumSubindexPage = () => {
     const shortenedUrl =
         currentUrl.length > 25 ? currentUrl.substring(0, 25) + "..." : currentUrl;
 
-    const QUERY_ENDPOINT = process.env.NEXT_PUBLIC_ENDPOINT || "https://api.default.com";
-
-    const shortenedEndpoint =
-        QUERY_ENDPOINT.length > 25 ? QUERY_ENDPOINT.substring(0, 25) + "..." : QUERY_ENDPOINT;
+        const shortenedEndpoint =
+        graphData?.endpoint?.length > 25 ? graphData.endpoint.substring(0, 25) + "..." : graphData?.endpoint || "Not Provided";
+    
 
         useEffect(() => {
             const encodedData = searchParams.get("graphData");
             const selectedProviderParam = searchParams.get("selectedProvider"); // Get selectedProvider from query params
-        
+            const indexName = searchParams.get("indexName");
+            const endpoint = searchParams.get("endpoint");
             if (encodedData) {
                 try {
                     const decodedData = JSON.parse(decodeURIComponent(encodedData));
@@ -82,7 +116,6 @@ const EthereumSubindexPage = () => {
                 setSelectedProvider(selectedProviderParam); // Directly store string instead of converting to number
             }
         }, [searchParams]);
-
 
     useEffect(() => {
         if (queryData && 'nodes' in queryData && 'links' in queryData) {
@@ -193,13 +226,13 @@ const EthereumSubindexPage = () => {
     curl -X POST \\
     -H "Content-Type: application/json" \\
     -d '{"query": "{ factories(first: 5) { id poolCount txCount totalVolumeUSD } }"}' \\
-    https://api.graphRAG.com/api/api-key/subindexes/id/5zvR82Q0aXYFyDEKLZ9t6v9adgnptvYpKsBxtqVENFV
+    ${dynamicApiUrl}
         `,
         React: `
     import axios from 'axios';
     
     const fetchData = async () => {
-        const response = await axios.post("https://api.graphRAG.com/api/api-key", {
+        const response = await axios.post("${dynamicApiUrl}", {
             query: "{ factories(first: 5) { id poolCount txCount totalVolumeUSD } }"
         });
         console.log(response.data);
@@ -214,7 +247,7 @@ const EthereumSubindexPage = () => {
         const [data, setData] = useState(null);
     
         useEffect(() => {
-            fetch("https://api.graphRAG.com/api/api-key", {
+            fetch("${dynamicApiUrl}", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -232,7 +265,7 @@ const EthereumSubindexPage = () => {
     const fetch = require('node-fetch');
     
     async function fetchData() {
-        const response = await fetch("https://api.graphRAG.com/api/api-key", {
+        const response = await fetch("${dynamicApiUrl}", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -247,6 +280,7 @@ const EthereumSubindexPage = () => {
         `
     };
 
+
     return (
         <div className="min-h-screen bg-[#0D0D0D] text-white font-sans">
             {/* External Navbar */}
@@ -256,19 +290,19 @@ const EthereumSubindexPage = () => {
             <div className="p-8">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-2xl font-semibold">Ethereum Transactions Subindex</h1><br />
+                        <h1 className="text-2xl font-semibold">{graphData?.indexName || "Not Provided"}</h1><br />
                         <p className="text-gray-400 mt-1 text-sm">Aggregates and indexes Ethereum transactions, allowing users to query by sender, receiver, amount, and timestamp.</p><br />
                         <p className="text-gray-500 text-sm mt-1">⚡ Queries: 12.4k | Updated a year ago</p>
                         <div className="mt-6 flex items-center justify-center text-gray-400 font-semibold text-sm">
                             <span>PROVIDER <br />
-                                {selectedProvider}
+                                {graphData?.selectedProvider}
                             </span>
 
                             <span className="mx-4 text-white">|</span>
                             <span>
                                 QUERY ENDPOINT <br />
                                 <a
-                                    href={QUERY_ENDPOINT}
+                                    href={graphData?.endpoint}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-blue-400 hover:underline"
@@ -374,16 +408,16 @@ const EthereumSubindexPage = () => {
                     <div className="mt-4">
                         <div className="flex justify-between text-xs sm:text-sm">
                             <span className="text-gray-400">Query URL Format</span>
-                            <span className="text-gray-500 truncate">[project-name]</span>
+                            <span className="text-gray-500 truncate">[Web3 Graph Index]</span>
                         </div>
                         <div className="mt-2 p-2 bg-gray-900 rounded-lg text-xs sm:text-sm break-all">
                         <a
-                                    href={QUERY_ENDPOINT}
+                                    href={graphData?.endpoint}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-blue-400 hover:underline"
                                 >
-                                    {QUERY_ENDPOINT}
+                                    {graphData?.endpoint}
                                 </a>
                         </div>
                     </div>
@@ -414,12 +448,12 @@ const EthereumSubindexPage = () => {
                         <div className="flex justify-between whitespace-nowrap mt-2 border-b border-gray-700 p-2 text-xs sm:text-sm">
                             <span className="text-gray-400">Query Endpoint</span>
                             <div className="p-2 truncate"><a
-                                    href={QUERY_ENDPOINT}
+                                    href={graphData?.endpoint}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-blue-400 hover:underline"
                                 >
-                                    {QUERY_ENDPOINT}
+                                    {graphData?.endpoint}
                                 </a></div>
                         </div>
 
@@ -441,12 +475,12 @@ const EthereumSubindexPage = () => {
                             <div className="p-4 break-all">
                                 <pre className="text-gray-400">
                                 <a
-                                    href={QUERY_ENDPOINT}
+                                    href={graphData?.endpoint}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-blue-400 hover:underline"
                                 >
-                                    {QUERY_ENDPOINT}
+                                    {graphData?.endpoint}
                                 </a>
                                 </pre>
                             </div>
@@ -458,26 +492,26 @@ const EthereumSubindexPage = () => {
 
             {/* Example Usage and Documentation */}
             <div className="p-8">
-                <h2 className="text-xl font-bold">Example usage</h2>
-                <div className="bg-[#1E1E1E] rounded-lg text-sm mt-4 w-full">
-                    <div className="flex border-b border-gray-700">
-                        {Object.keys(exampleCode).map((tab) => (
-                            <button
-                                key={tab}
-                                className={`px-4 py-2 ${activeTab === tab ? "bg-gray-800 text-blue-400" : "text-gray-400"}`}
-                                onClick={() => setActiveTab(tab as keyof typeof exampleCode)}
-                            >
-                                {tab}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="p-4">
-                        <pre className="text-gray-400 text-wrap">
-                            {exampleCode[activeTab]}
-                        </pre>
-                    </div>
+            <h2 className="text-xl font-bold">Example usage</h2>
+            <div className="bg-[#1E1E1E] rounded-lg text-sm mt-4 w-full">
+                <div className="flex border-b border-gray-700">
+                    {Object.keys(exampleCode).map((tab) => (
+                        <button
+                            key={tab}
+                            className={`px-4 py-2 ${activeTab === tab ? "bg-gray-800 text-blue-400" : "text-gray-400"}`}
+                            onClick={() => setActiveTab(tab as keyof typeof exampleCode)}
+                        >
+                            {tab}
+                        </button>
+                    ))}
+                </div>
+                <div className="p-4">
+                    <pre className="text-gray-400 text-wrap">
+                        {exampleCode[activeTab]}
+                    </pre>
                 </div>
             </div>
+        </div>
 
             <div className="p-6 sm:p-8">
                 <h2 className="text-lg sm:text-xl font-bold">Documentation</h2>

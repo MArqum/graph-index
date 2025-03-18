@@ -16,32 +16,45 @@ const Dashboard = () => {
     interface GraphDataItem {
         nodes?: GraphNode[]; // Optional array of nodes
         createdAt?: string;  // Date string (ISO format expected)
+        indexName?:string;
+        selectedProvider?:string;
     }
 
     const router = useRouter();
     const [graphData, setGraphData] = useState<GraphDataItem[]>([]);
     const apiURL= process.env.NEXT_PUBLIC_API_URL;
     useEffect(() => {
-        // Fetch data from backend
         const fetchGraphData = async () => {
             try {
-                const response = await fetch(`${apiURL}/graphData`);
+                const response = await fetch(`${apiURL}/graphData`, {
+                    headers: {
+                        "ngrok-skip-browser-warning": "true",
+                        "Content-Type": "application/json",
+                    },
+                });
+    
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+    
                 const data = await response.json();
-                console.log("Fetched Data:", data); // Log API response
-
+                console.log("Fetched Data:", data);
+    
                 if (Array.isArray(data)) {
-                    setGraphData(data); // Only set data if it's an array
+                    setGraphData(data);
                 } else {
                     console.error("API did not return an array:", data);
-                    setGraphData([]); // Set empty array to prevent errors
+                    setGraphData([]);
                 }
             } catch (error) {
                 console.error("Error fetching graph data:", error);
             }
         };
-
+    
         fetchGraphData();
     }, []);
+    
+    
 
 
     const handleNavigation = () => {
@@ -127,11 +140,11 @@ const Dashboard = () => {
 
                                         {/* Top Right: Powered by QuickNode */}
                                         <div className="absolute top-3 right-3 text-xs sm:text-sm text-gray-400">
-                                            Powered by <span className="font-bold text-white">Solana</span>
+                                            Powered by <span className="font-bold text-white">{item.selectedProvider}</span>
                                         </div>
 
                                         {/* Card Content */}
-                                        <h3 className="font-bold text-lg sm:text-xl mt-14">Ethereum Transactions SubIndex</h3>
+                                        <h3 className="font-bold text-lg sm:text-xl mt-14">{item.indexName}</h3>
                                         <p className="text-xs sm:text-sm mt-2 opacity-80">
                                             Aggregates and indexes Ethereum transactions, allowing users to query by sender, receiver, amount, and timestamp.
                                         </p>

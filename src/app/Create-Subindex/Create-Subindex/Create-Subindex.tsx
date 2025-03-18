@@ -34,7 +34,7 @@ const CreateSubindex = () => {
     const [messages, setMessages] = useState<
         { id: string; sender: "user" | "bot"; text: string }[]
     >([]);
-    const [graphData, setGraphData] = useState<{ nodes: GraphNode[]; links: GraphLink[] }>({
+    const [graphData, setGraphData] = useState<{ nodes: GraphNode[]; links: GraphLink[]; messages?: { text: string }[] }>({
         nodes: [],
         links: [],
     });
@@ -336,17 +336,34 @@ const CreateSubindex = () => {
         }
     
         // Get selectedProvider from localStorage
-        const selectedProvider = localStorage.getItem("selectedProvider");
+        const selectedProvider = localStorage.getItem("selectedProvider") || "defaultProvider";
+    
+        // Dynamically create the API endpoint based on the chat ID
+        const dynamicEndpoint = `${apiURL}/api/rag/${currentChatId}`;
+    
+        // Extract the latest user message correctly
+        let latestMessage = "General Index"; // Default fallback
+        const userMessages = messages.filter((msg) => msg.sender === "user"); // Get only user messages
+    
+        if (userMessages.length > 0) {
+            latestMessage = userMessages[userMessages.length - 1].text || "General Index"; // Last user message
+        }
     
         try {
             const response = await fetch(`${apiURL}/graphData`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "ngrok-skip-browser-warning": "true" // Bypass ngrok browser warning
+                },
                 body: JSON.stringify({
                     chatId: currentChatId,
-                    createdAt: new Date().toISOString(), // Adding createdAt timestamp
-                    selectedProvider: selectedProvider, // Convert to number if exists
-                    ...graphData,
+                    createdAt: new Date().toISOString(),
+                    selectedProvider: selectedProvider, 
+                    nodes: graphData.nodes || [],  // Ensure nodes exist
+                    links: graphData.links || [],  // Ensure links exist
+                    endpoint: dynamicEndpoint, // Send dynamically generated endpoint
+                    indexName: latestMessage, // Store the latest user message as index name
                 }),
             });
     
@@ -362,6 +379,9 @@ const CreateSubindex = () => {
             console.error("Error storing Graph Data:", error);
         }
     };
+    
+    
+    
     
 
 
@@ -442,7 +462,7 @@ const CreateSubindex = () => {
                                                         🤖 {/* AI Icon */}
                                                     </div>
                                                 </div>
-                                                <div className="max-w-[75%] bg-[#3A3A3A] text-white p-3 rounded-lg break-words text-sm leading-relaxed">
+                                                <div className="max-w-[100%] bg-[#3A3A3A] text-white p-3 rounded-lg break-words text-sm leading-relaxed">
                                                     {msg.text}
                                                 </div>
                                             </div>

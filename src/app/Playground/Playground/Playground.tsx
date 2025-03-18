@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { FiSearch } from "react-icons/fi";
-import { IoMdHelpCircleOutline } from "react-icons/io";
+import { IoMdHelpCircleOutline, IoMdSend } from "react-icons/io";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import Navbar from "@/app/Navbar/page";
 import { v4 as uuidv4 } from 'uuid';
@@ -74,7 +74,7 @@ const Playground = () => {
     }
   }, [selectedChat]);
 
-const apiURL= process.env.NEXT_PUBLIC_API_URL
+  const apiURL = process.env.NEXT_PUBLIC_API_URL
   const handleDeleteChat = async () => {
     if (!chatToDelete) return;
     console.log(chatToDelete);
@@ -100,7 +100,12 @@ const apiURL= process.env.NEXT_PUBLIC_API_URL
 
   const fetchChatHistory = async () => {
     try {
-      const response = await fetch(`${apiURL}/chats`);
+      const response = await fetch(`${apiURL}/chats`, {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+          "Content-Type": "application/json",
+        },
+      });
       const data = await response.json();
       console.log("All Chats:", data);
 
@@ -121,13 +126,17 @@ const apiURL= process.env.NEXT_PUBLIC_API_URL
     }
   };
 
-
   const fetchChatHistories = async () => {
     try {
-      const response = await fetch(`${apiURL}/chats/${selectedChat}`);
+      const response = await fetch(`${apiURL}/chats/${selectedChat}`, {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+          "Content-Type": "application/json",
+        },
+      });
       const data: { messages?: ChatMessage[] } = await response.json();
       console.log("Chat History Data:", data);
-  
+
       if (data && data.messages) {
         setMessages(
           data.messages.map((msg: ChatMessage) => ({
@@ -346,33 +355,49 @@ const apiURL= process.env.NEXT_PUBLIC_API_URL
             </h2>
           </div>
 
-          <Card className="h-80 overflow-y-auto p-4">
-            <CardContent className="flex flex-col space-y-2">
-              {messages.map((msg) => (
+          {/* Chat Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex w-full ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+              >
                 <div
-                  key={msg.id}
-                  className={`p-2 rounded-lg text-white max-w-[75%] break-words w-fit
-                  ${msg.sender === "user" ? "bg-gray-700 self-end text-right" : "bg-gray-700 self-start text-left"}`}
+                  className={`p-3 rounded-lg max-w-[75%] break-words w-fit
+          ${msg.sender === "user" ? "bg-gray-700 text-white" : "bg-gray-800 text-white"}`}
                 >
                   {msg.text}
                 </div>
-              ))}
-            </CardContent>
-          </Card>
+              </div>
+            ))}
+          </div>
 
-          <Textarea
-            className="h-36 rounded-lg bg-[#1E1E1E] p-2"
-            placeholder="Input query"
-            value={query}
-            onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setQuery(e.target.value)}
-          />
-
-          <div className="flex space-x-4">
-            <Button onClick={handleSendMessage}>Send</Button>
+          {/* Message Input */}
+          <div className="relative flex items-center p-4 border-t border-gray-700 bg-[#1E1E1E]">
+            <textarea
+              className="flex-1 bg-transparent text-white border-none outline-none resize-none p-3 rounded-lg focus:ring-0"
+              placeholder="Send a message..."
+              value={query}
+              rows={1}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <button
+              className="absolute right-6 text-gray-400 hover:text-white"
+              onClick={handleSendMessage}
+            >
+              <IoMdSend size={24} />
+            </button>
           </div>
         </div>
 
-        {/* Query Results Section */}
+
+
         {/* Query Results Section (Only Show If graphData Exists) */}
         {graphData && Object.keys(graphData).length > 0 && (
           <div className="w-full lg:w-1/4 bg-[#1E1E1E] rounded-2xl p-4 shadow-lg relative">
