@@ -301,7 +301,7 @@ const EthereumSubindexPage = () => {
     const fetch = require('node-fetch');
     
     async function fetchData() {
-        const response = await fetch("${dynamicApiUrl}", {
+        const response = await fetch("${dynamicApiUrl}${indexName}", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
