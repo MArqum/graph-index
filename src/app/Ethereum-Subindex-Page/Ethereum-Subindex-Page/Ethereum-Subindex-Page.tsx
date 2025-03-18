@@ -133,7 +133,7 @@ const EthereumSubindexPage = () => {
         currentUrl.length > 25 ? currentUrl.substring(0, 25) + "..." : currentUrl;
 
         const shortenedEndpoint =
-        (graphData?.endpoint?.length ?? 0) > 25 ? graphData?.endpoint?.substring(0, 25) + "..." : graphData?.endpoint || "Not Provided";
+        ((graphData?.endpoint?.length || endpoint?.length) ?? 0) > 25 ? (graphData?.endpoint?.substring(0,25) + "...") || (endpoint ? endpoint.substring(0, 25) + "..." : "Not Provided") : graphData?.endpoint || "Not Provided";
     
 
         useEffect(() => {
@@ -326,7 +326,7 @@ const EthereumSubindexPage = () => {
             <div className="p-8">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-2xl font-semibold">{graphData?.indexName || "Not Provided"}</h1><br />
+                        <h1 className="text-2xl font-semibold">{graphData?.indexName || indexName || 'not provided'}</h1><br />
                         <p className="text-gray-400 mt-1 text-sm">Aggregates and indexes Ethereum transactions, allowing users to query by sender, receiver, amount, and timestamp.</p><br />
                         <p className="text-gray-500 text-sm mt-1">⚡ Queries: 12.4k | Updated a year ago</p>
                         <div className="mt-6 flex items-center justify-center text-gray-400 font-semibold text-sm">
@@ -453,7 +453,7 @@ const EthereumSubindexPage = () => {
                                     rel="noopener noreferrer"
                                     className="text-blue-400 hover:underline"
                                 >
-                                    {graphData?.endpoint}
+                                    {graphData?.endpoint || endpoint}
                                 </a>
                         </div>
                     </div>
@@ -461,7 +461,7 @@ const EthereumSubindexPage = () => {
 
                 {/* API Key and Query Endpoint Section */}
                 <div className="p-4 rounded-lg bg-[#1E1E1E] col-span-1 sm:col-span-2 lg:col-span-3">
-                    <h2 className="text-lg sm:text-xl font-bold">API Key and Query Endpoint{endpoint}</h2>
+                    <h2 className="text-lg sm:text-xl font-bold">API Key and Query Endpoint</h2>
                     <div className="mt-4">
                         {/* API Key */}
                         <div className="relative flex justify-between text-xs sm:text-sm border-b border-gray-700 p-2">
@@ -489,7 +489,7 @@ const EthereumSubindexPage = () => {
                                     rel="noopener noreferrer"
                                     className="text-blue-400 hover:underline"
                                 >
-                                    {graphData?.endpoint}
+                                    {graphData?.endpoint || endpoint}
                                 </a></div>
                         </div>
 
@@ -516,7 +516,7 @@ const EthereumSubindexPage = () => {
                                     rel="noopener noreferrer"
                                     className="text-blue-400 hover:underline"
                                 >
-                                    {graphData?.endpoint}
+                                    {graphData?.endpoint || endpoint}
                                 </a>
                                 </pre>
                             </div>
