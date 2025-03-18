@@ -373,7 +373,7 @@ const CreateSubindex = () => {
     
             // Navigate after successful storage
             router.push(
-                `/Ethereum-Subindex-Page?graphData=${encodeURIComponent(JSON.stringify(graphData))}&selectedProvider=${selectedProvider}`
+                `/Ethereum-Subindex-Page?graphData=${encodeURIComponent(JSON.stringify(graphData))}&selectedProvider=${selectedProvider}&endpoint=${dynamicEndpoint}&indexName=${latestMessage}`
             );
         } catch (error) {
             console.error("Error storing Graph Data:", error);

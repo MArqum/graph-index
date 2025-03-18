@@ -70,6 +70,7 @@ const EthereumSubindexPage = () => {
         nodes: GraphNode[];
         links: GraphLink[];
         endpoint?: string; // Added the missing 'endpoint' property
+        indexName?:string;
       }
 
     const [queryData, setQueryData] = useState<QueryData | null>(null);
@@ -325,7 +326,7 @@ const EthereumSubindexPage = () => {
             <div className="p-8">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-2xl font-semibold">{indexName || "Not Provided"}</h1><br />
+                        <h1 className="text-2xl font-semibold">{graphData?.indexName || "Not Provided"}</h1><br />
                         <p className="text-gray-400 mt-1 text-sm">Aggregates and indexes Ethereum transactions, allowing users to query by sender, receiver, amount, and timestamp.</p><br />
                         <p className="text-gray-500 text-sm mt-1">⚡ Queries: 12.4k | Updated a year ago</p>
                         <div className="mt-6 flex items-center justify-center text-gray-400 font-semibold text-sm">
