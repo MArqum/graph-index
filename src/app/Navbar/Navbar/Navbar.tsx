@@ -31,12 +31,12 @@ const Navbar = () => {
             </div>
 
             {/* User & Wallet Button */}
-            <div className="flex items-center space-x-4">
+           {/* <div className="flex items-center space-x-4">
                 <FaUser className="text-white hover:text-purple-400 cursor-pointer" onClick={() => setIsOpen(!isOpen)} />
                 <button className="bg-gray-400 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
                     Connect to Wallet
                 </button>
-            </div>
+            </div> */}
 
             {/* Dropdown Menu */}
             {isOpen && (

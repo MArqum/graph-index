@@ -195,19 +195,10 @@ const Dashboard = () => {
                         <p>Powered by</p>
                         <div className="flex justify-center space-x-8 mt-4">
                             <div>
-                                <img src="/QuickNode.png" alt="Company 1" className="w-20" />
+                                <img src="/Solana.png" alt="Company 1" className="w-20" />
                             </div>
                             <div>
-                                <img src="/Morails.png" alt="Company 2" className="w-20" />
-                            </div>
-                            <div>
-                                <img src="/Infura.png" alt="Company 3" className="w-20" />
-                            </div>
-                            <div>
-                                <img src="/Alcheme.png" alt="Company 4" className="w-20" />
-                            </div>
-                            <div>
-                                <img src="/Ankr.png" alt="Company 5" className="w-20" />
+                                <img src="/Etherium.png" alt="Company 2" className="w-20" />
                             </div>
                         </div>
                     </div>

@@ -28,7 +28,6 @@ interface GraphLink {
 
 const CreateSubindex = () => {
     const router = useRouter();
-    const [selectedProvider, setSelectedProvider] = useState<number | null>(null);
     const [step, setStep] = useState(1);
     const [input, setInput] = useState("");
     const [messages, setMessages] = useState<
@@ -39,12 +38,19 @@ const CreateSubindex = () => {
         links: [],
     });
     const [activePreview, setActivePreview] = useState<"graph" | "table" | "text" | "code">("graph");
-    const apiURL=process.env.NEXT_PUBLIC_API_URL
+    const apiURL = process.env.NEXT_PUBLIC_API_URL
+
+    const [selectedProvider, setSelectedProvider] = useState<string | null>(() => {
+        if (typeof window !== "undefined") {
+            return localStorage.getItem("selectedProvider") || null;
+        }
+        return null;
+    });
 
     useEffect(() => {
         const storedProvider = localStorage.getItem("selectedProvider");
         if (storedProvider) {
-            setSelectedProvider(Number(storedProvider));
+            setSelectedProvider(storedProvider); // Keep it as string
         }
     }, []);
 
@@ -334,43 +340,43 @@ const CreateSubindex = () => {
             console.error("Graph Data or Chat ID is missing");
             return;
         }
-    
+
         // Get selectedProvider from localStorage
         const selectedProvider = localStorage.getItem("selectedProvider") || "defaultProvider";
-    
+
         // Dynamically create the API endpoint based on the chat ID
         const dynamicEndpoint = `${apiURL}/api/rag/${currentChatId}`;
-    
+
         // Extract the latest user message correctly
         let latestMessage = "General Index"; // Default fallback
         const userMessages = messages.filter((msg) => msg.sender === "user"); // Get only user messages
-    
+
         if (userMessages.length > 0) {
             latestMessage = userMessages[userMessages.length - 1].text || "General Index"; // Last user message
         }
-    
+
         try {
             const response = await fetch(`${apiURL}/graphData`, {
                 method: "POST",
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
                     "ngrok-skip-browser-warning": "true" // Bypass ngrok browser warning
                 },
                 body: JSON.stringify({
                     chatId: currentChatId,
                     createdAt: new Date().toISOString(),
-                    selectedProvider: selectedProvider, 
+                    selectedProvider: selectedProvider,
                     nodes: graphData.nodes || [],  // Ensure nodes exist
                     links: graphData.links || [],  // Ensure links exist
                     endpoint: dynamicEndpoint, // Send dynamically generated endpoint
                     indexName: latestMessage, // Store the latest user message as index name
                 }),
             });
-    
+
             if (!response.ok) throw new Error("Failed to store Graph Data");
-    
+
             console.log("Graph Data stored successfully!");
-    
+
             // Navigate after successful storage
             router.push(
                 `/Ethereum-Subindex-Page?graphData=${encodeURIComponent(JSON.stringify(graphData))}&selectedProvider=${selectedProvider}&endpoint=${dynamicEndpoint}&indexName=${latestMessage}`
@@ -379,10 +385,10 @@ const CreateSubindex = () => {
             console.error("Error storing Graph Data:", error);
         }
     };
-    
-    
-    
-    
+
+
+
+
 
 
 
@@ -404,22 +410,19 @@ const CreateSubindex = () => {
                 {step === 1 ? (
                     // Step 1: Select Data Provider
                     <div>
-                        <h1 className="text-3xl mt-24 font-bold">Create New Subindex</h1>
-                        <p className="text-gray-400 mt-2 max-w-xl">
-                            Use our AI assistant to generate a custom subindex based on your needs.
-                            Select a data provider and refine your schema effortlessly.
-                        </p>
-
                         <h2 className="text-xl font-bold mt-28">Select Chain</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 mt-6">
                             {dataProviders.map((provider) => (
                                 <div
                                     key={provider.id}
                                     className={`bg-[#1E1E1E] p-10 sm:p-16 flex justify-center items-center rounded-3xl cursor-pointer border-2 
-                        ${selectedProvider === Number(provider.id) ? "border-blue-500" : "border-transparent"} hover:border-gray-500`}
+                        ${selectedProvider === provider.id
+                                            ? "border-blue-500"
+                                            : "border-transparent"
+                                        } hover:border-gray-500`}
                                     onClick={() => {
-                                        setSelectedProvider(Number(provider.id));
-                                        localStorage.setItem("selectedProvider", provider.id.toString());
+                                        setSelectedProvider(provider.id); // Store string
+                                        localStorage.setItem("selectedProvider", provider.id);
                                     }}
                                 >
                                     <Image
